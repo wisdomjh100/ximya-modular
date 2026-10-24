@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ximya's Modular</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%23141010' width='32' height='32' rx='6'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23000' stroke='%23ffb03a' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="boot">
+    <div class="boot-card">
+      <span class="screw tl"></span>
+      <span class="screw tr"></span>
+      <span class="screw bl"></span>
+      <span class="screw br"></span>
+      <p class="eyebrow">XIMYA'S</p>
+      <h1>Ximya's Modular</h1>
+      <p class="lede">브라우저에서 바로 패치하는 모듈러 신시사이저. 오실레이터, 필터, 엔벨로프를 케이블로 연결해 연주합니다.</p>
+      <button id="power" type="button">전원 켜기</button>
+      <p class="boot-note">소리 재생을 위해 한 번 눌러 주세요. 처음엔 볼륨을 낮춰 두세요.</p>
+    </div>
+  </div>
+
+  <div id="shell" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">XIMYA'S</span>
+        <span class="brand-name">MODULAR</span>
+      </div>
+      <div class="top-tools">
+        <select id="preset" aria-label="프리셋">
+          <option value="">내 패치</option>
+          <option value="lead">리드</option>
+          <option value="bass">베이스</option>
+          <option value="seq">시퀀스</option>
+          <option value="pad">패드</option>
+          <option value="drone">드론</option>
+        </select>
+        <button id="load-preset" class="tool" type="button">불러오기</button>
+        <div class="session-box">
+          <span class="session-label">SESSION</span>
+          <select id="session" aria-label="라이브 세션">
+            <option value="">라이브 세션</option>
+            <option value="yorke">Thom Yorke</option>
+          </select>
+        </div>
+        <button id="panic" class="tool" type="button">패닉</button>
+        <button id="mute" class="tool" type="button">음소거</button>
+        <button id="clear" class="tool" type="button">비우기</button>
+        <button id="export" class="tool" type="button">내보내기</button>
+        <button id="import" class="tool" type="button">가져오기</button>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+        <button id="help-btn" class="tool" type="button">도움말</button>
+      </div>
+      <label class="master">MASTER
+        <input id="master" type="range" min="0" max="1" step="0.01" value="0.72">
+        <i id="meter"></i>
+      </label>
+      <div id="midi">MIDI</div>
+    </header>
+
+    <div class="workspace">
+      <aside id="library"></aside>
+      <div class="rack-scroll">
+        <div id="rack">
+          <div class="rail top"></div>
+          <div id="modules"></div>
+          <svg id="cables" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="cblur" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+              </filter>
+            </defs>
+            <g id="cable-layer"></g>
+          </svg>
+          <div class="rail bottom"></div>
+          <div id="empty" hidden>왼쪽에서 모듈을 추가하세요. 소리가 나게 하려면 OUT 모듈이 필요합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <aside id="suggest" hidden>
+      <div class="suggest-card">
+        <header>
+          <div>
+            <p class="suggest-kicker">추천</p>
+            <h2 id="suggest-title"></h2>
+          </div>
+          <button id="suggest-close" type="button" aria-label="추천 닫기">×</button>
+        </header>
+        <p id="suggest-lead"></p>
+        <div id="suggest-list"></div>
+      </div>
+    </aside>
+
+    <footer class="hintbar">
+      <p>잭을 끌어서 연결 · 빈 곳에 놓으면 추천 · 더블클릭/우클릭으로 제거 · 노브 드래그, Shift 미세 · A–K 연주 · Z/X 옥타브 · 스페이스 서스테인</p>
+      <div id="stats"></div>
+    </footer>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <dialog id="help">
+    <h2>패치하는 법</h2>
+    <p>출력 잭(오른쪽)에서 입력 잭(왼쪽)으로 끌어 케이블을 꽂습니다. 은색은 오디오, 파랑은 CV, 노랑 점선은 게이트입니다.</p>
+    <ul>
+      <li>리드 패치는 건반 피치 → VCO, 게이트 → ENV → VCA 로 이미 연결되어 있습니다.</li>
+      <li>한 출력은 여러 입력에 나눠 꽂을 수 있습니다.</li>
+      <li>선을 랙 바닥에 놓으면, 그 잭에 꽂기 좋은 곳이 추천 탭으로 열립니다.</li>
+      <li>노브는 위아래로 드래그합니다. Shift는 미세 조절, 더블클릭은 처음 값입니다.</li>
+      <li>시퀀서 스텝은 클릭으로 켜고 끄고, 위아래로 끌면 음높이가 바뀝니다.</li>
+      <li>LOOP는 REC로 녹음하고 다시 누르면 그 길이로 반복합니다. DUB은 위에 겹쳐 녹음합니다.</li>
+      <li>SESSION 메뉴의 Thom Yorke를 고르면 라이브 세션 세팅이 바로 열립니다.</li>
+      <li>패치는 이 브라우저에 자동 저장됩니다. JSON으로 내보내 다른 곳에서도 열 수 있습니다.</li>
+    </ul>
+    <p>
+      <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> 흰 건반,
+      <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> 검은 건반,
+      <kbd>Z</kbd> <kbd>X</kbd> 옥타브,
+      <kbd>Space</kbd> 서스테인,
+      <kbd>Delete</kbd> 선택한 모듈 삭제.
+      MIDI 건반과 모듈레이션 휠, 서스테인 페달도 받을 수 있습니다.
+    </p>
+    <div class="help-actions">
+      <button id="help-close" class="tool" type="button">닫기</button>
+    </div>
+  </dialog>
+
+  <script src="js/audio.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    document.getElementById('power').addEventListener('click', function () {
+      try {
+        Engine.start();
+      } catch (err) {
+        alert('이 브라우저는 웹 오디오를 지원하지 않습니다.');
+        return;
+      }
+      document.getElementById('boot').hidden = true;
+      document.getElementById('shell').hidden = false;
+      UI.start();
+    });
+  </script>
+</body>
+</html>
